@@ -1,0 +1,135 @@
+---
+- name: Initial Setup for ThinkPad T490
+  hosts: localhost
+  become: true
+  vars:
+    user: kernel
+    dotfiles_path: "{{ playbook_dir }}/dotfiles"
+
+  tasks:
+
+  - name: Update and upgrade APT packages
+    apt:
+      update_cache: yes
+      upgrade: dist
+
+  - name: Install base packages
+    apt:
+      name:
+        - build-essential
+        - curl
+        - wget
+        - git
+        - unzip
+        - software-properties-common
+        - gnupg
+        - zsh
+        - tmux
+        - fonts-firacode
+        - gnome-tweaks
+        - flatpak
+        - python3-pip
+        - ansible
+        - kitty
+        - i3
+        - rofi
+        - polybar
+        - feh
+        - picom
+        - lxappearance
+        - starship
+        - zsh-autosuggestions
+        - zsh-syntax-highlighting
+      state: present
+
+  - name: Install virtualization tools for KVM
+    apt:
+      name:
+        - qemu-kvm
+        - libvirt-daemon-system
+        - virt-manager
+        - bridge-utils
+      state: present
+
+  - name: Add user to libvirt and kvm groups
+    user:
+      name: "{{ user }}"
+      groups: "libvirt,kvm"
+      append: yes
+
+  - name: Change default shell to zsh for user
+    user:
+      name: "{{ user }}"
+      shell: /usr/bin/zsh
+
+  - name: Install VS Code (via Microsoft repo)
+    shell: |
+      wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+      install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/
+      sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
+      apt update
+      apt install -y code
+    args:
+      creates: /usr/bin/code
+
+  - name: Install Zed Editor
+    shell: |
+      mkdir -p /opt/zed-tmp
+      curl -L https://zed.dev/api/download/linux --output /opt/zed-tmp/zed.tar.xz
+      tar -xJf /opt/zed-tmp/zed.tar.xz -C /opt/
+      ln -s /opt/zed*/zed /usr/local/bin/zed
+    args:
+      creates: /usr/local/bin/zed
+
+  - name: Install Docker and dependencies
+    apt:
+      name:
+        - docker.io
+        - docker-compose
+      state: present
+
+  - name: Add user to docker group
+    user:
+      name: "{{ user }}"
+      groups: docker
+      append: yes
+
+  - name: Install Flatpak apps (Darktable, GIMP)
+    shell: |
+      flatpak install -y flathub org.darktable.Darktable
+      flatpak install -y flathub org.gimp.GIMP
+    args:
+      creates: /var/lib/flatpak/app/org.darktable.Darktable
+
+  - name: Enable and start Docker
+    systemd:
+      name: docker
+      enabled: yes
+      state: started
+
+  - name: Create dotfiles directory in user home
+    file:
+      path: "/home/{{ user }}/.dotfiles"
+      state: directory
+      owner: "{{ user }}"
+      group: "{{ user }}"
+      mode: '0755'
+    become: true
+
+  - name: Copy dotfiles from repository to user home
+    copy:
+      src: "{{ dotfiles_path }}/"
+      dest: "/home/{{ user }}/.dotfiles/"
+      owner: "{{ user }}"
+      group: "{{ user }}"
+      mode: preserve
+    become: true
+
+  - name: Apply dotfiles (assumes install script present)
+    shell: |
+      cd /home/{{ user }}/.dotfiles && ./install.sh
+    become: false
+    args:
+      chdir: "/home/{{ user }}"
+    when: not lookup('env', 'SKIP_DOTFILES', default=False)
+

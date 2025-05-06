@@ -1,0 +1,35 @@
+set $mod Mod4
+
+# Font and colors
+font pango:Fira Code 10
+client.focused          #8be9fd #6272a4 #50fa7b #44475a
+client.unfocused        #44475a #282a36 #f8f8f2 #282a36
+
+# Keybindings
+bindsym $mod+Return exec kitty
+bindsym $mod+d exec rofi -show run
+bindsym $mod+Shift+q kill
+bindsym $mod+Shift+r restart
+bindsym $mod+f fullscreen toggle
+bindsym $mod+h focus left
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+l focus right
+
+# Layouts
+bindsym $mod+space layout toggle split
+
+# Startup
+exec_always --no-startup-id feh --bg-fill ~/.wallpapers/cyber_wall.jpg
+exec_always --no-startup-id picom --config ~/.config/picom/picom.conf
+
+# Status bar
+bar {
+  status_command ~/.config/polybar/launch.sh
+  font pango:Fira Code 9
+  colors {
+    background #1e1e2e
+    statusline #f8f8f2
+    separator  #44475a
+  }
+}
