@@ -5,6 +5,23 @@ font pango:Fira Code 10
 client.focused          #8be9fd #6272a4 #50fa7b #44475a
 client.unfocused        #44475a #282a36 #f8f8f2 #282a36
 
+# Remap Caps Lock to Control
+exec_always --no-startup-id setxkbmap -option ctrl:nocaps
+
+# ThinkPad function keys
+# Volume controls
+bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +5%
+bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -5%
+bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
+bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle
+
+# Brightness controls
+bindsym XF86MonBrightnessUp exec --no-startup-id brightnessctl s +5%
+bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl s 5%-
+
+# Display controls
+bindsym XF86Display exec --no-startup-id arandr
+
 # Keybindings
 bindsym $mod+Return exec kitty
 bindsym $mod+d exec rofi -show run
